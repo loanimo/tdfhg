@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Lucky Draw & Scratch Platform - Pro Master Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #070b14 0%, #13112e 50%, #240b36 100%); }
+        .card-glass { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .scratch-canvas { touch-action: none; cursor: crosshair; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee 22s linear infinite; }
+    </style>
+</head>
+<body class="gradient-bg text-white min-h-screen flex flex-col justify-between">
+
+    <!-- Top Admin-Controlled Notification Bar -->
+    <div class="bg-gradient-to-r from-red-600 via-amber-600 to-red-600 text-white text-xs sm:text-sm py-2 px-3 overflow-hidden shadow-lg relative z-40">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <span class="bg-black/50 px-2 py-0.5 rounded font-bold text-amber-300 shrink-0"><i class="fa-solid fa-bell animate-bounce"></i> জরুরি নোটিশ:</span>
+            <div class="overflow-hidden w-full">
+                <p id="topNotificationText" class="animate-marquee font-medium">
+                    আজকের মেগা ড্র-তে অংশগ্রহণকারী সকল প্রবাসীদের জন্য থাকছে বিশেষ বোনাস! পেমেন্টের পর লাস্ট ৪ ডিজিট দিয়ে দ্রুত ভেরিফাই করুন।
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation & Header -->
+    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg">G</div>
+                <span class="font-bold text-lg sm:text-xl tracking-wide bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">GLOBAL LOTTERY</span>
+            </div>
+            <div class="flex gap-2 sm:gap-3 items-center">
+                <select id="langSelect" onchange="changeLanguage()" class="bg-slate-800 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 outline-none">
+                    <option value="bn">🇧🇩 বাংলা</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                </select>
+                <button onclick="toggleAdminPanel()" class="bg-amber-500/20 border border-amber-500/50 px-3 py-1.5 rounded-lg text-xs hover:bg-amber-500 hover:text-slate-950 transition font-bold text-amber-300 flex items-center gap-1.5 cursor-pointer relative">
+                    <i class="fa-solid fa-user-shield"></i> অ্যাডমিন প্যানেল
+                    <span id="adminUnreadBadge" class="hidden bg-red-600 text-white text-[10px] px-1.5 py-0.2 rounded-full animate-ping">1</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-6xl flex-grow">
+
+        <!-- Live Mega Draw Countdown Timer -->
+        <div class="card-glass max-w-2xl mx-auto rounded-2xl p-4 mb-8 text-center border border-amber-500/30 shadow-xl">
+            <p class="text-xs sm:text-sm text-amber-300 font-semibold uppercase tracking-wider mb-2"><i class="fa-solid fa-clock"></i> পরবর্তী মেগা ড্র শুরু হতে বাকি</p>
+            <div class="flex justify-center gap-3 sm:gap-6 text-center">
+                <div class="bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-700">
+                    <span id="cdHours" class="text-2xl sm:text-3xl font-extrabold text-amber-400">02</span>
+                    <p class="text-[10px] text-slate-400">ঘণ্টা</p>
+                </div>
+                <div class="bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-700">
+                    <span id="cdMinutes" class="text-2xl sm:text-3xl font-extrabold text-amber-400">45</span>
+                    <p class="text-[10px] text-slate-400">মিনিট</p>
+                </div>
+                <div class="bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-700">
+                    <span id="cdSeconds" class="text-2xl sm:text-3xl font-extrabold text-red-400">18</span>
+                    <p class="text-[10px] text-slate-400">সেকেন্ড</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero & 1-Click Login -->
+        <section class="text-center mb-10">
+            <h1 id="heroTitle" class="text-3xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-500 bg-clip-text text-transparent leading-tight">
+                বিশ্বের যেকোনো প্রান্ত থেকে খেলুন, লাখ লাখ টাকা জিতুন!
+            </h1>
+            <p id="heroDesc" class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-6">
+                পিন বা পাসওয়ার্ড ছাড়াই আপনার মোবাইল নম্বর দিয়ে ১-ক্লিক লগইন করুন। আপনার নিজ দেশের কারেন্সিতে উপভোগ করুন ১০০% নিরাপদ মেগা ড্র!
+            </p>
+            
+            <div class="card-glass max-w-lg mx-auto p-4 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-3 border border-amber-500/20">
+                <select id="countryCode" class="bg-slate-900 text-white p-3 rounded-xl border border-slate-700 outline-none text-sm">
+                    <option value="+880">🇧🇩 +880 (BD)</option>
+                    <option value="+966">🇸🇦 +966 (KSA)</option>
+                    <option value="+971">🇦🇪 +971 (UAE)</option>
+                    <option value="+60">🇲🇾 +60 (MAL)</option>
+                    <option value="+974">🇶🇦 +974 (QAT)</option>
+                    <option value="+968">🇴🇲 +968 (OMA)</option>
+                    <option value="+965">🇰🇼 +965 (KWT)</option>
+                </select>
+                <input type="tel" id="userPhone" placeholder="মোবাইল নম্বর লিখুন" class="bg-slate-900 text-white p-3 rounded-xl border border-slate-700 flex-grow outline-none focus:border-amber-500 text-sm">
+                <button onclick="userLogin()" class="bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold px-6 py-3 rounded-xl hover:opacity-90 transition shadow-lg cursor-pointer text-sm">
+                    প্রবেশ করুন
+                </button>
+            </div>
+        </section>
+
+        <!-- Global Live Stats Counter -->
+        <section class="grid grid-cols-3 gap-3 sm:gap-6 mb-10 text-center">
+            <div class="card-glass p-4 rounded-2xl border border-slate-800">
+                <p class="text-xl sm:text-3xl font-extrabold text-amber-400">৪৫,৮২০+</p>
+                <p class="text-xs sm:text-sm text-slate-400">সক্রিয় প্রবাসী মেম্বার</p>
+            </div>
+            <div class="card-glass p-4 rounded-2xl border border-slate-800">
+                <p class="text-xl sm:text-3xl font-extrabold text-emerald-400">৳১২.৫ কোটি+</p>
+                <p class="text-xs sm:text-sm text-slate-400">মোট প্রাইজ বিতরণ</p>
+            </div>
+            <div class="card-glass p-4 rounded-2xl border border-slate-800">
+                <p class="text-xl sm:text-3xl font-extrabold text-yellow-300">১২৮ জন</p>
+                <p class="text-xs sm:text-sm text-slate-400">আজকের বিজয়ী</p>
+            </div>
+        </section>
+
+        <!-- Live Winner Ticker -->
+        <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl mb-10 flex items-center gap-3 overflow-hidden shadow-lg">
+            <span class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg text-xs font-bold uppercase whitespace-nowrap animate-pulse">লাইভ উইনার</span>
+            <div id="winnerTicker" class="text-sm text-amber-200 font-medium whitespace-nowrap overflow-hidden">
+                🇧🇩 রফিকুল ইসলাম (ঢাকা) এইমাত্র স্ক্র্যাচ কার্ড ঘষে ৳১৫,৪৫,০০০ জিতেছেন!
+            </div>
+        </div>
+
+        <!-- 3-Step Easy Guide (How It Works) -->
+        <section class="mb-12">
+            <h2 class="text-xl sm:text-2xl font-bold text-center mb-6 text-slate-100">মাত্র ৩টি সহজ ধাপে পুরস্কার জিতুন</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="card-glass p-5 rounded-2xl text-center relative">
+                    <div class="w-10 h-10 bg-amber-500 text-slate-950 font-extrabold rounded-full flex items-center justify-center mx-auto mb-3">১</div>
+                    <h3 class="font-bold text-amber-300 mb-1">১-ক্লিক লগইন</h3>
+                    <p class="text-xs text-slate-400">আপনার দেশ ও মোবাইল নম্বর দিয়ে কোনো ঝামেলা ছাড়াই ড্যাশবোর্ডে প্রবেশ করুন।</p>
+                </div>
+                <div class="card-glass p-5 rounded-2xl text-center relative">
+                    <div class="w-10 h-10 bg-amber-500 text-slate-950 font-extrabold rounded-full flex items-center justify-center mx-auto mb-3">২</div>
+                    <h3 class="font-bold text-amber-300 mb-1">প্যাকেজ ও স্ক্র্যাচ</h3>
+                    <p class="text-xs text-slate-400">পছন্দের প্যাকেজ নিয়ে স্ক্র্যাচ কার্ড ঘষুন এবং তাৎক্ষণিক আপনার উইনিং অ্যামাউন্ট দেখুন।</p>
+                </div>
+                <div class="card-glass p-5 rounded-2xl text-center relative">
+                    <div class="w-10 h-10 bg-amber-500 text-slate-950 font-extrabold rounded-full flex items-center justify-center mx-auto mb-3">৩</div>
+                    <h3 class="font-bold text-amber-300 mb-1">সার্টিফিকেট ও পেমেন্ট</h3>
+                    <p class="text-xs text-slate-400">অফিশিয়াল সিল-সিগনেচারযুক্ত সার্টিফিকেট ভেরিফাই করে সরাসরি বিকাশ বা ব্যাংকে টাকা নিন।</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Packages Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-center mb-2 border-b border-slate-800 pb-3">আমাদের প্রিমিয়াম প্যাকেজসমূহ</h2>
+            <p class="text-center text-slate-400 text-xs sm:text-sm mb-8">প্যাকেজ অনুযায়ী নির্ধারিত উইনিং রেঞ্জ (ডিউ বিল সার্টিফিকেট ডাউনলোডের সময় প্রদর্শিত হবে)</p>
+            <div id="packagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically rendered -->
+            </div>
+        </section>
+
+        <!-- Scratch Card Simulation Section -->
+        <section id="scratchSection" class="card-glass p-6 rounded-3xl mb-12 hidden text-center shadow-2xl border border-amber-500/40">
+            <h2 class="text-2xl font-bold text-amber-400 mb-2">রিয়েল-টাইম স্ক্র্যাচ কার্ড গেম</h2>
+            <p class="text-xs sm:text-sm text-slate-300 mb-6">নিচের কার্ডটির সিলভার ফয়েল আঙুল বা মাউস দিয়ে ঘষে আপনার পুরস্কার দেখে নিন!</p>
+            <div class="relative w-full max-w-md h-48 mx-auto bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-500 flex items-center justify-center">
+                <div id="scratchResult" class="text-2xl font-bold text-amber-300 px-4">
+                    🎉 অভিনন্দন! আপনি জিতেছেন: ৳১,৫৪৩,০০০
+                </div>
+                <canvas id="scratchCanvas" width="400" height="190" class="absolute inset-0 scratch-canvas"></canvas>
+            </div>
+            <button onclick="viewCertificate()" class="mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg hover:opacity-90 transition cursor-pointer">
+                অফিশিয়াল সার্টিফিকেট দেখুন ও ডাউনলোড করুন
+            </button>
+        </section>
+
+        <!-- Public Certificate Verifier Box -->
+        <section class="card-glass p-6 rounded-3xl mb-12 border border-emerald-500/30 text-center max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold text-emerald-400 mb-2"><i class="fa-solid fa-certificate"></i> পাবলিক সার্টিফিকেট ভেরিফায়ার</h2>
+            <p class="text-xs text-slate-400 mb-4">যেকোনো সার্টিফিকেট আইডি দিয়ে যাচাই করুন সেটি ১০০% আসল কি না (উদাহরণ: GLB-882431)</p>
+            <div class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+                <input type="text" id="verifyCertInput" placeholder="সার্টিফিকেট আইডি লিখুন (যেমন: GLB-882431)" class="bg-slate-900 text-white p-3 rounded-xl border border-slate-700 flex-grow text-sm outline-none focus:border-emerald-500">
+                <button onclick="verifyPublicCert()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl text-sm cursor-pointer transition">যাচাই করুন</button>
+            </div>
+            <div id="verifyResultBox" class="mt-4 hidden text-sm p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300"></div>
+        </section>
+
+        <!-- Winner Proof & Review Gallery -->
+        <section class="mb-12">
+            <h2 class="text-xl sm:text-2xl font-bold text-center mb-6">বিজয়ীদের পেমেন্ট প্রুফ ও মতামত</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="card-glass p-5 rounded-2xl border border-slate-800">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold">🇸🇦</div>
+                        <div>
+                            <h4 class="font-bold text-sm">ফয়সাল আহমেদ (রিয়াদ)</h4>
+                            <span class="text-[11px] text-emerald-400"><i class="fa-solid fa-circle-check"></i> পেমেন্ট ভেরিফাইড</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">"প্রথমে বিশ্বাস হয়নি, কিন্তু সার্টিফিকেট ডাউনলোড করে প্রসেসিং ফি ক্লিয়ার করার ৩০ মিনিটের মধ্যেই আমার দেশের ব্যাংক অ্যাকাউন্টে পুরো টাকা চলে এসেছে!"</p>
+                </div>
+                <div class="card-glass p-5 rounded-2xl border border-slate-800">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold">🇲🇾</div>
+                        <div>
+                            <h4 class="font-bold text-sm">জাকির হোসেন (মালয়েশিয়া)</h4>
+                            <span class="text-[11px] text-emerald-400"><i class="fa-solid fa-circle-check"></i> পেমেন্ট ভেরিফাইড</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">"সিলভার প্যাকেজ খেলেছিলাম। লাইভ চ্যাটে অ্যাডমিন ভাইয়েরা খুব আন্তরিকভাবে সাহায্য করেছেন। প্রবাসীদের জন্য সেরা প্ল্যাটফর্ম।"</p>
+                </div>
+                <div class="card-glass p-5 rounded-2xl border border-slate-800">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold">🇦🇪</div>
+                        <div>
+                            <h4 class="font-bold text-sm">তারিকুল ইসলাম (দুবাই)</h4>
+                            <span class="text-[11px] text-emerald-400"><i class="fa-solid fa-circle-check"></i> পেমেন্ট ভেরিফাইড</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">"অফিশিয়াল সিল আর সিগনেচারসহ সার্টিফিকেট দেখে একদম নিশ্চিন্ত হয়েছিলাম। আলহামদুলিল্লাহ পরিবারের মুখে হাসি ফোটাতে পেরেছি।"</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Certificate & Hidden Due Bill Modal -->
+    <div id="certModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border-2 border-amber-500/70 max-w-2xl w-full p-6 sm:p-8 rounded-3xl shadow-2xl text-slate-100 relative my-8">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl font-bold cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="text-center border-b border-slate-700 pb-4 mb-5">
+                <span class="bg-amber-500/20 text-amber-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Official Winning Certificate & Prize Voucher</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-2">GLOBAL LOTTERY BOARD</h2>
+                <p class="text-xs text-slate-400">100% Verified & Secure International Prize Verification</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 bg-slate-950 p-4 rounded-2xl border border-slate-800 items-center">
+                <div class="col-span-2 space-y-1.5 text-sm">
+                    <p><strong>বিজয়ীর নাম:</strong> <span id="certUserName">সম্মানিত প্রবাসী সদস্য</span></p>
+                    <p><strong>সার্টিফিকেট আইডি:</strong> <span class="text-emerald-400 font-mono">GLB-882431</span></p>
+                    <p class="text-amber-400 font-bold text-lg">মোট উইনিং অ্যামাউন্ট: <span id="certWinAmount">৳১,৫৪৩,০০০</span></p>
+                </div>
+                <div class="text-center bg-slate-900 p-3 rounded-xl border border-amber-500/30">
+                    <i class="fa-solid fa-qrcode text-4xl text-amber-400 mb-1"></i>
+                    <p class="text-[10px] text-slate-400">Scan to Verify</p>
+                </div>
+            </div>
+
+            <!-- Official Seal & Director Signatures -->
+            <div class="grid grid-cols-3 gap-2 items-center text-center bg-slate-950/60 p-3 rounded-xl border border-slate-800 mb-5 text-xs">
+                <div>
+                    <p class="font-serif italic text-amber-300 text-base">A. Rahman</p>
+                    <div class="border-t border-slate-700 mt-1 pt-1 text-[10px] text-slate-400">Director of Operations</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-full border-2 border-dashed border-amber-500 flex items-center justify-center text-amber-400 font-bold text-[10px] rotate-[-12deg] bg-amber-500/10">
+                        OFFICIAL<br>VERIFIED<br>SEAL
+                    </div>
+                </div>
+                <div>
+                    <p class="font-serif italic text-amber-300 text-base">M. Chowdhury</p>
+                    <div class="border-t border-slate-700 mt-1 pt-1 text-[10px] text-slate-400">Chief Financial Officer</div>
+                </div>
+            </div>
+
+            <!-- Hidden Due Bill Revealed -->
+            <div class="bg-red-950/40 border border-amber-500/50 p-4 rounded-2xl mb-5">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-amber-200">বকেয়া প্রসেসিং ও ক্লিয়ারেন্স ফি (Due Bill):</span>
+                    <span id="modalDueBill" class="text-xl font-extrabold text-amber-400">৳১২,৯৯৯</span>
+                </div>
+                <p class="text-xs text-slate-300">সার্টিফিকেটটি আনলক ও ডাউনলোড করতে এবং প্রাইজমানি রিসিভ করতে বকেয়া বিল পরিশোধ করে লাস্ট ৪ ডিজিট বা স্লিপ জমা দিন।</p>
+            </div>
+
+            <!-- Payment Input & Slip Upload -->
+            <div class="mb-5 space-y-3">
+                <div class="flex gap-2">
+                    <input type="text" id="clientLastDigits" placeholder="পেমেন্টের লাস্ট ৪ ডিজিট / TrxID লিখুন" class="bg-slate-800 text-white p-2.5 rounded-xl border border-slate-700 flex-grow text-xs outline-none focus:border-amber-500">
+                </div>
+                <input type="file" id="paymentSlip" class="w-full text-xs bg-slate-800 text-slate-300 p-2 rounded-xl border border-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 cursor-pointer">
+            </div>
+
+            <button onclick="submitPaymentAndDownload()" class="w-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition cursor-pointer text-sm">
+                <i class="fa-solid fa-download"></i> পেমেন্ট ভেরিফাই ও সার্টিফিকেট ডাউনলোড করুন
+            </button>
+        </div>
+    </div>
+
+    <!-- Real-Time Client Live Chat Widget -->
+    <div id="clientChatBox" class="fixed bottom-24 right-4 sm:right-6 w-80 sm:w-96 bg-slate-900 border border-emerald-500/50 rounded-2xl shadow-2xl z-50 hidden flex flex-col overflow-hidden">
+        <div class="bg-emerald-600 p-3 flex justify-between items-center text-white">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 bg-green-300 rounded-full animate-pulse"></span>
+                <span class="font-bold text-sm">সরাসরি অ্যাডমিন সাপোর্ট</span>
+            </div>
+            <button onclick="toggleClientChat()" class="text-white hover:text-slate-200 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="clientChatMessages" class="p-3 h-64 overflow-y-auto space-y-2 text-xs bg-slate-950">
+            <div class="bg-slate-800 text-slate-200 p-2.5 rounded-xl rounded-tl-none max-w-[85%]">
+                আসসালামু আলাইকুম! গ্লোবাল লটারি সাপোর্টে স্বাগতম। কিভাবে আপনাকে সাহায্য করতে পারি?
+            </div>
+        </div>
+        <div class="p-2 bg-slate-900 border-t border-slate-800 flex gap-2">
+            <input type="text" id="clientChatInput" onkeypress="if(event.key==='Enter') sendClientMessage()" placeholder="আপনার মেসেজ লিখুন..." class="bg-slate-800 text-white px-3 py-2 rounded-xl text-xs flex-grow outline-none border border-slate-700 focus:border-emerald-500">
+            <button onclick="sendClientMessage()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Super Admin Control Panel Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-slate-900 border-2 border-amber-500/50 max-w-5xl w-full p-5 sm:p-7 rounded-3xl shadow-2xl text-slate-100 relative my-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-5">
+                <h2 class="text-xl sm:text-2xl font-bold text-amber-400"><i class="fa-solid fa-crown"></i> সুপার অ্যাডমিন কন্ট্রোল ড্যাশবোর্ড</h2>
+                <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button onclick="switchAdminTab('tabOrders')" class="bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs cursor-pointer">অর্ডার ও ম্যানুয়াল এন্ট্রি</button>
+                <button onclick="switchAdminTab('tabChat')" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-comments"></i> ক্লায়েন্ট লাইভ চ্যাট ইনবক্স <span id="tabChatCount" class="bg-red-600 px-1.5 rounded-full text-[10px]">0</span>
+                </button>
+                <button onclick="switchAdminTab('tabSettings')" class="bg-slate-800 text-amber-300 border border-slate-700 font-bold px-4 py-2 rounded-xl text-xs cursor-pointer">প্যাকেজ, ডিউ বিল ও নোটিশ সেটিংস</button>
+            </div>
+
+            <!-- Tab 1: Orders & Manual Entry -->
+            <div id="tabOrders" class="admin-tab space-y-6">
+                <!-- Manual Order Entry from Inbox -->
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-amber-300 mb-3"><i class="fa-solid fa-plus-circle"></i> ইনবক্স থেকে ম্যানুয়াল পেমেন্ট ও ক্লায়েন্ট এন্ট্রি দিন</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <input type="text" id="manualPhone" placeholder="ক্লায়েন্ট নম্বর (+966...)" class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 text-xs">
+                        <select id="manualPkg" class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 text-xs">
+                            <option value="ব্রোঞ্জ (৳৯৯৯)|৳১,৫৪৩,০০০|৳১২,৯৯৯">ব্রোঞ্জ (৳৯৯৯) - ডিউ ৳১২,৯৯৯</option>
+                            <option value="সিলভার (৳২,৯৯৯)|৳৩,৫০০,০০০|৳১৫,৯৯৯">সিলভার (৳২,৯৯৯) - ডিউ ৳১৫,৯৯৯</option>
+                            <option value="প্লাটিনাম (৳১২,৯৯৯)|৳১২,৯০০,০০০|৳২৬,৯৯৯">প্লাটিনাম (৳১২,৯৯৯) - ডিউ ৳২৬,৯৯৯</option>
+                        </select>
+                        <input type="text" id="manualLast4" placeholder="লাস্ট ৪ ডিজিট (যেমন: 4590)" class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 text-xs">
+                        <button onclick="addManualOrder()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs py-2.5 cursor-pointer">অর্ডার যুক্ত করুন</button>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs bg-slate-950 rounded-xl overflow-hidden">
+                        <thead class="bg-slate-800 text-amber-400">
+                            <tr>
+                                <th class="p-3">ক্লায়েন্ট নম্বর</th>
+                                <th class="p-3">প্যাকেজ</th>
+                                <th class="p-3">লাস্ট ডিজিট</th>
+                                <th class="p-3">উইনিং প্রাইজ</th>
+                                <th class="p-3">হিডেন ডিউ বিল</th>
+                                <th class="p-3">স্ট্যাটাস / অ্যাকশন</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminOrdersTable" class="divide-y divide-slate-800 text-slate-300">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Admin Live Chat Inbox -->
+            <div id="tabChat" class="admin-tab hidden">
+                <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4">
+                    <h3 class="text-sm font-bold text-emerald-400 mb-3">ক্লায়েন্টদের পাঠানো লাইভ মেসেজ ও রিপ্লাই বক্স</h3>
+                    <div id="adminChatFeed" class="h-64 overflow-y-auto space-y-2 p-3 bg-slate-900 rounded-xl mb-3 text-xs">
+                        <p class="text-slate-500 text-center">ক্লায়েন্ট মেসেজ করলে এখানে সাথে সাথে দেখা যাবে...</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="adminReplyInput" onkeypress="if(event.key==='Enter') sendAdminReply()" placeholder="ক্লায়েন্টকে উত্তর লিখুন..." class="bg-slate-900 text-white p-3 rounded-xl border border-slate-700 flex-grow text-xs outline-none focus:border-emerald-500">
+                        <button onclick="sendAdminReply()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs cursor-pointer">উত্তর পাঠান</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Package, Due Bill & Notice Controller -->
+            <div id="tabSettings" class="admin-tab hidden space-y-5">
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-amber-300 mb-2">হোমপেজ টপ নোটিফিকেশন বার পরিবর্তন করুন</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="adminNoticeInput" class="bg-slate-900 text-white p-2.5 rounded-xl border border-slate-700 flex-grow text-xs" value="আজকের মেগা ড্র-তে অংশগ্রহণকারী সকল প্রবাসীদের জন্য থাকছে বিশেষ বোনাস! পেমেন্টের পর লাস্ট ৪ ডিজিট দিয়ে দ্রুত ভেরিফাই করুন।">
+                        <button onclick="updateTopNotice()" class="bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs cursor-pointer">আপডেট করুন</button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-amber-300 mb-3">প্যাকেজ অনুযায়ী উইনিং রেঞ্জ ও ডিউ বিল এডিট করুন</h3>
+                    <div id="adminPackageEditor" class="space-y-2 text-xs">
+                        <!-- Dynamic Package Editor -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Support Buttons (Auto-Rotating Imo & Live Chat) -->
+    <div class="fixed bottom-6 right-4 sm:right-6 flex flex-col gap-3 z-40">
+        <a id="imoFloatingBtn" href="imo://call?phone=+8801700000000" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-2xl flex items-center justify-center w-14 h-14 transition transform hover:scale-110" title="ইমুতে সরাসরি কল/মেসেজ করুন">
+            <i class="fa-solid fa-phone-volume text-xl"></i>
+        </a>
+        <button onclick="toggleClientChat()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-full shadow-2xl flex items-center justify-center w-14 h-14 transition transform hover:scale-110 relative cursor-pointer" title="লাইভ চ্যাট করুন">
+            <i class="fa-solid fa-comments text-xl"></i>
+            <span id="clientChatNotif" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">!</span>
+        </button>
+    </div>
+
+    <!-- Footer & Trust Badges -->
+    <footer class="bg-slate-950 text-slate-400 text-center py-8 border-t border-slate-800 text-sm px-4">
+        <div class="flex flex-wrap justify-center gap-3 mb-4 text-xs">
+            <span class="bg-pink-600/20 border border-pink-500/40 text-pink-300 px-3 py-1 rounded-lg font-bold">bKash</span>
+            <span class="bg-orange-600/20 border border-orange-500/40 text-orange-300 px-3 py-1 rounded-lg font-bold">Nagad</span>
+            <span class="bg-purple-600/20 border border-purple-500/40 text-purple-300 px-3 py-1 rounded-lg font-bold">Rocket</span>
+            <span class="bg-blue-600/20 border border-blue-500/40 text-blue-300 px-3 py-1 rounded-lg font-bold">International Remittance</span>
+            <span class="bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 px-3 py-1 rounded-lg font-bold">100% SSL Verified</span>
+        </div>
+        <p>&copy; 2026 Global Lottery & Scratch Platform. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // Master Package Data (Scalable Due Bills starting from 12,999 BDT)
+        let packages = [
+            { id: 1, name: "ব্রোঞ্জ / স্ট্যান্ডার্ড প্যাকেজ", price: "৳৯৯৯", winRange: "৳১,১৫৪,০০০ – ৳১,৫৪৩,০০০", sampleWin: "৳১,৫৪৩,০০০", dueBill: "৳১২,৯৯৯" },
+            { id: 2, name: "সিলভার প্যাকেজ", price: "৳২,৯৯৯", winRange: "৳২,১০০,০০০ – ৳৩,৫০০,০০০", sampleWin: "৳৩,৫০০,০০০", dueBill: "৳১৫,৯৯৯" },
+            { id: 3, name: "গোল্ডেন প্যাকেজ", price: "৳৪,৯৯৯", winRange: "৳৩,৮০০,০০০ – ৳৫,২০০,০০০", sampleWin: "৳৫,২০০,০০০", dueBill: "৳১৮,৯৯৯" },
+            { id: 4, name: "ডায়মন্ড প্যাকেজ", price: "৳৯,৯৯৯", winRange: "৳৬,০০,০০০ – ৳৯,৮০০,০০০", sampleWin: "৳৯,৮০০,০০০", dueBill: "৳২২,৯৯৯" },
+            { id: 5, name: "প্লাটিনাম প্যাকেজ", price: "৳১২,৯৯৯", winRange: "৳৮,৫০০,০০০ – ৳১২,৯০০,০০০", sampleWin: "৳১২,৯০০,০০০", dueBill: "৳২৬,৯৯৯" },
+            { id: 6, name: "রয়্যাল ভিআইপি প্যাকেজ", price: "৳১৮,৯৯৯", winRange: "৳১২,০০০,০০০ – ৳৫০,০০০,০০০", sampleWin: "৳৫০,০০০,০০০", dueBill: "৳৩১,৯৯৯" },
+            { id: 7, name: "মেগা ভিআইপি প্যাকেজ", price: "৳২৪,৯৯৯", winRange: "৳১৫,০০,০০০ – ৳৭৮,৯১,০০০", sampleWin: "৳৭৮,৯১,০০০", dueBill: "৳৩৭,৯৯৯" }
+        ];
+
+        // Orders Store
+        let orders = [
+            { phone: "+966501234567", pkg: "ব্রোঞ্জ (৳৯৯৯)", last4: "8921", win: "৳১,৫৪৩,০০০", due: "৳১২,৯৯৯", status: "ডিউ বিল পেন্ডিং" },
+            { phone: "+601123456789", pkg: "প্লাটিনাম (৳১২,৯৯৯)", last4: "4410", win: "৳১২,৯০০,০০০", due: "৳২৬,৯৯৯", status: "ডিউ বিল পেন্ডিং" }
+        ];
+
+        let currentUserPhone = "সম্মানিত প্রবাসী সদস্য";
+        let selectedDueBill = "৳১২,৯৯৯";
+        let selectedWinAmount = "৳১,৫৪৩,০০০";
+        let chatHistory = [];
+
+        // Render Homepage Packages
+        function renderPackages() {
+            const grid = document.getElementById('packagesGrid');
+            grid.innerHTML = '';
+            packages.forEach(pkg => {
+                grid.innerHTML += `
+                    <div class="card-glass p-6 rounded-2xl shadow-xl flex flex-col justify-between hover:border-amber-500/60 transition">
+                        <div>
+                            <h3 class="text-xl font-bold text-amber-400 mb-2">${pkg.name}</h3>
+                            <div class="text-3xl font-extrabold mb-4">${pkg.price}</div>
+                            <p class="text-xs text-slate-300 mb-1"><i class="fa-solid fa-trophy text-amber-400"></i> উইনিং রেঞ্জ:</p>
+                            <div class="text-amber-200 font-bold bg-slate-900/70 p-2.5 rounded-xl mb-4 text-center border border-amber-500/20 text-sm">${pkg.winRange}</div>
+                        </div>
+                        <button onclick="selectPackage(${pkg.id})" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold py-3 rounded-xl hover:opacity-90 transition cursor-pointer shadow-md text-sm">
+                            প্যাকেজ সিলেক্ট করে খেলুন
+                        </button>
+                    </div>
+                `;
+            });
+            renderAdminPackageEditor();
+        }
+
+        function selectPackage(id) {
+            const pkg = packages.find(p => p.id === id);
+            selectedDueBill = pkg.dueBill;
+            selectedWinAmount = pkg.sampleWin;
+            document.getElementById('scratchResult').innerText = `🎉 অভিনন্দন! আপনি জিতেছেন: ${pkg.sampleWin}`;
+            document.getElementById('scratchSection').classList.remove('hidden');
+            resetScratchCanvas();
+            window.scrollTo({ top: document.getElementById('scratchSection').offsetTop - 70, behavior: 'smooth' });
+        }
+
+        // Real-Time Client <-> Admin Live Chat System
+        function toggleClientChat() {
+            const box = document.getElementById('clientChatBox');
+            box.classList.toggle('hidden');
+            document.getElementById('clientChatNotif').classList.add('hidden');
+        }
+
+        function sendClientMessage() {
+            const input = document.getElementById('clientChatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            chatHistory.push({ sender: 'client', user: currentUserPhone, text: msg, time });
+            input.value = '';
+            renderChatBoxes();
+
+            // Notify Admin Badge
+            document.getElementById('adminUnreadBadge').classList.remove('hidden');
+            document.getElementById('tabChatCount').innerText = chatHistory.filter(c => c.sender === 'client').length;
+        }
+
+        function sendAdminReply() {
+            const input = document.getElementById('adminReplyInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            chatHistory.push({ sender: 'admin', user: 'Admin', text: msg, time });
+            input.value = '';
+            renderChatBoxes();
+
+            // Notify Client if chat box is closed
+            if (document.getElementById('clientChatBox').classList.contains('hidden')) {
+                document.getElementById('clientChatNotif').classList.remove('hidden');
+            }
+        }
+
+        function renderChatBoxes() {
+            const clientBox = document.getElementById('clientChatMessages');
+            const adminBox = document.getElementById('adminChatFeed');
+
+            clientBox.innerHTML = `<div class="bg-slate-800 text-slate-200 p-2.5 rounded-xl rounded-tl-none max-w-[85%]">আসসালামু আলাইকুম! গ্লোবাল লটারি সাপোর্টে স্বাগতম। কিভাবে সাহায্য করতে পারি?</div>`;
+            adminBox.innerHTML = '';
+
+            chatHistory.forEach(item => {
+                if (item.sender === 'client') {
+                    clientBox.innerHTML += `<div class="bg-emerald-600 text-white p-2.5 rounded-xl rounded-tr-none max-w-[85%] ml-auto">${item.text} <span class="block text-[9px] opacity-75 text-right">${item.time}</span></div>`;
+                    adminBox.innerHTML += `<div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-slate-200"><strong class="text-amber-400">${item.user}:</strong> ${item.text} <span class="text-[10px] text-slate-400 float-right">${item.time}</span></div>`;
+                } else {
+                    clientBox.innerHTML += `<div class="bg-slate-800 border border-emerald-500/40 text-emerald-200 p-2.5 rounded-xl rounded-tl-none max-w-[85%]"><strong class="text-amber-400 block text-[10px]">অ্যাডমিন সাপোর্ট:</strong>${item.text} <span class="block text-[9px] opacity-75">${item.time}</span></div>`;
+                    adminBox.innerHTML += `<div class="bg-emerald-950/60 border border-emerald-500/40 p-2.5 rounded-xl text-emerald-200 text-right"><strong>আপনি (Admin):</strong> ${item.text} <span class="text-[10px] text-slate-400 ml-2">${item.time}</span></div>`;
+                }
+            });
+
+            clientBox.scrollTop = clientBox.scrollHeight;
+            adminBox.scrollTop = adminBox.scrollHeight;
+        }
+
+        // Admin Panel Functions
+        function toggleAdminPanel() {
+            document.getElementById('adminModal').classList.toggle('hidden');
+            document.getElementById('adminUnreadBadge').classList.add('hidden');
+            renderAdminOrders();
+        }
+
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+        }
+
+        function renderAdminOrders() {
+            const tbody = document.getElementById('adminOrdersTable');
+            tbody.innerHTML = '';
+            orders.forEach((o, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-mono">${o.phone}</td>
+                        <td class="p-3">${o.pkg}</td>
+                        <td class="p-3 font-bold text-emerald-400">${o.last4}</td>
+                        <td class="p-3">${o.win}</td>
+                        <td class="p-3 text-amber-400 font-bold">${o.due}</td>
+                        <td class="p-3">
+                            ${o.status === 'অ্যাপ্রুভড' 
+                                ? `<span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg font-bold">অ্যাপ্রুভড</span>` 
+                                : `<button onclick="approveOrder(${index})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg font-bold cursor-pointer">অনুমোদন দিন</button>`}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function approveOrder(index) {
+            orders[index].status = 'অ্যাপ্রুভড';
+            renderAdminOrders();
+        }
+
+        function addManualOrder() {
+            const phone = document.getElementById('manualPhone').value.trim();
+            const pkgData = document.getElementById('manualPkg').value.split('|');
+            const last4 = document.getElementById('manualLast4').value.trim();
+            if (!phone || !last4) return alert('নম্বর ও লাস্ট ৪ ডিজিট দিন!');
+            orders.unshift({ phone, pkg: pkgData[0], last4, win: pkgData[1], due: pkgData[2], status: 'অ্যাপ্রুভড' });
+            renderAdminOrders();
+            document.getElementById('manualPhone').value = '';
+            document.getElementById('manualLast4').value = '';
+            alert('ম্যানুয়াল অর্ডার সফলভাবে যুক্ত হয়েছে!');
+        }
+
+        function updateTopNotice() {
+            const val = document.getElementById('adminNoticeInput').value.trim();
+            if (val) {
+                document.getElementById('topNotificationText').innerText = val;
+                alert('হোমপেজ নোটিফিকেশন বার আপডেট হয়েছে!');
+            }
+        }
+
+        function renderAdminPackageEditor() {
+            const container = document.getElementById('adminPackageEditor');
+            container.innerHTML = '';
+            packages.forEach((pkg, idx) => {
+                container.innerHTML += `
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                        <span class="font-bold text-amber-300">${pkg.name} (${pkg.price})</span>
+                        <input type="text" id="editWin_${idx}" value="${pkg.winRange}" class="bg-slate-950 p-2 rounded-lg border border-slate-700 text-xs">
+                        <input type="text" id="editDue_${idx}" value="${pkg.dueBill}" class="bg-slate-950 p-2 rounded-lg border border-slate-700 text-xs text-amber-400 font-bold">
+                        <button onclick="savePackageEdit(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold cursor-pointer">সেভ করুন</button>
+                    </div>
+                `;
+            });
+        }
+
+        function savePackageEdit(idx) {
+            packages[idx].winRange = document.getElementById(`editWin_${idx}`).value;
+            packages[idx].dueBill = document.getElementById(`editDue_${idx}`).value;
+            renderPackages();
+            alert('প্যাকেজের তথ্য ও ডিউ বিল সফলভাবে আপডেট হয়েছে!');
+        }
+
+        // Public Certificate Verifier
+        function verifyPublicCert() {
+            const code = document.getElementById('verifyCertInput').value.trim().toUpperCase();
+            const resBox = document.getElementById('verifyResultBox');
+            resBox.classList.remove('hidden');
+            if (code === 'GLB-882431' || code.startsWith('GLB-')) {
+                resBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <strong>সার্টিফিকেট ভেরিফাইড!</strong> আইডি: <b>${code}</b> আন্তর্জাতিক লটারি বোর্ড কর্তৃক অনুমোদিত এবং বৈধ।`;
+            } else {
+                resBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> সঠিক সার্টিফিকেট আইডি দিন (যেমন: GLB-882431)।`;
+            }
+        }
+
+        // Countdown Timer Logic
+        let totalSeconds = 2 * 3600 + 45 * 60 + 18;
+        setInterval(() => {
+            if (totalSeconds <= 0) totalSeconds = 3 * 3600;
+            totalSeconds--;
+            const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            document.getElementById('cdHours').innerText = h;
+            document.getElementById('cdMinutes').innerText = m;
+            document.getElementById('cdSeconds').innerText = s;
+        }, 1000);
+
+        // Scratch Canvas Setup
+        const canvas = document.getElementById('scratchCanvas');
+        const ctx = canvas.getContext('2d');
+        function resetScratchCanvas() {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 18px Hind Siliguri';
+            ctx.fillText('ঘষে পুরস্কার দেখুন (Scratch Here)', 75, 100);
+        }
+        let isDrawing = false;
+        canvas.addEventListener('mousedown', () => isDrawing = true);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mousemove', scratchDraw);
+        canvas.addEventListener('touchstart', () => isDrawing = true);
+        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('touchmove', scratchDraw);
+
+        function scratchDraw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 26, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function userLogin() {
+            const code = document.getElementById('countryCode').value;
+            const phone = document.getElementById('userPhone').value.trim();
+            if (!phone || phone.length < 7) return alert('দয়া করে সঠিক মোবাইল নম্বর দিন!');
+            currentUserPhone = code + phone;
+            document.getElementById('certUserName').innerText = currentUserPhone;
+            alert(`স্বাগতম ${currentUserPhone}! আপনার ড্যাশবোর্ড প্রস্তুত।`);
+        }
+
+        function viewCertificate() {
+            document.getElementById('modalDueBill').innerText = selectedDueBill;
+            document.getElementById('certWinAmount').innerText = selectedWinAmount;
+            document.getElementById('certModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('certModal').classList.add('hidden');
+        }
+
+        function submitPaymentAndDownload() {
+            const last4 = document.getElementById('clientLastDigits').value.trim();
+            if (!last4) return alert('পেমেন্টের লাস্ট ৪ ডিজিট বা ট্রানজেকশন আইডি লিখুন!');
+            orders.unshift({ phone: currentUserPhone, pkg: "কাস্টম প্যাকেজ", last4, win: selectedWinAmount, due: selectedDueBill, status: "ভেরিফিকেশন পেন্ডিং" });
+            alert('আপনার পেমেন্ট তথ্য ও সার্টিফিকেট রিকোয়েস্ট অ্যাডমিনের কাছে পাঠানো হয়েছে!');
+            closeModal();
+        }
+
+        // Live Winner & Auto-Rotating Imo Numbers
+        const winners = [
+            "🇧🇩 রফিকুল ইসলাম (ঢাকা) এইমাত্র স্ক্র্যাচ কার্ড ঘষে ৳১৫,৪৫,০০০ জিতেছেন!",
+            "🇸🇦 ফয়সাল আহমেদ (রিয়াদ) এইমাত্র স্ক্র্যাচ কার্ড ঘষে SAR ৪১,৫০০ জিতেছেন!",
+            "🇦🇪 তারিকুল ইসলাম (দুবাই) এইমাত্র মেগা ড্র জিতে AED ৩৯,৮০০ জিতেছেন!",
+            "🇲🇾 জাকির হোসেন (কুয়ালালামপুর) এইমাত্র স্ক্র্যাচ কার্ড ঘষে RM ৪৭,২০০ জিতেছেন!"
+        ];
+        const imoNumbers = ["+8801700000001", "+8801800000002", "+8801900000003"];
+        let idx = 0;
+        setInterval(() => {
+            idx++;
+            document.getElementById('winnerTicker').innerText = winners[idx % winners.length];
+            document.getElementById('imoFloatingBtn').href = `imo://call?phone=${imoNumbers[idx % imoNumbers.length]}`;
+        }, 4000);
+
+        window.onload = () => {
+            renderPackages();
+            resetScratchCanvas();
+        };
+    </script>
+</body>
+</html>
